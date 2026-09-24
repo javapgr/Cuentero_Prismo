@@ -1,7 +1,16 @@
 import { Stack } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
 import { Suspense } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, useColorScheme } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+
+const ETIQUETAS = [
+  'chullachaqui',
+  'yacuruna',
+  'sachamama',
+  'tunchi',
+  'bufeo colorado',
+];
 
 const CUENTOS_SEMILLA = [
   {
@@ -21,6 +30,13 @@ const CUENTOS_SEMILLA = [
   },
 ];
 
+async function asegurarColumna(db, tabla, columna, definicion) {
+  const columnas = await db.getAllAsync(`PRAGMA table_info(${tabla})`);
+  if (!columnas.some((c) => c.name === columna)) {
+    await db.runAsync(`ALTER TABLE ${tabla} ADD COLUMN ${definicion}`);
+  }
+}
+
 async function iniciarBD(db) {
   await db.execAsync(`
     PRAGMA journal_mode = WAL;
@@ -30,15 +46,47 @@ async function iniciarBD(db) {
       cuerpo   TEXT NOT NULL DEFAULT '',
       creado   TEXT NOT NULL,
       editado  TEXT NOT NULL,
-      favorito INTEGER NOT NULL DEFAULT 0
+      favorito INTEGER NOT NULL DEFAULT 0,
+      audio    TEXT,
+      lugar_id INTEGER
+    );
+    CREATE TABLE IF NOT EXISTS etiqueta (
+      id     INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre TEXT NOT NULL UNIQUE
+    );
+    CREATE TABLE IF NOT EXISTS cuento_etiqueta (
+      cuento_id   INTEGER NOT NULL,
+      etiqueta_id INTEGER NOT NULL,
+      PRIMARY KEY (cuento_id, etiqueta_id)
+    );
+    CREATE TABLE IF NOT EXISTS lugar (
+      id        INTEGER PRIMARY KEY AUTOINCREMENT,
+      comunidad TEXT NOT NULL,
+      rio       TEXT NOT NULL DEFAULT '',
+      quebrada  TEXT NOT NULL DEFAULT ''
     );
   `);
 
-  const columnas = await db.getAllAsync('PRAGMA table_info(cuento)');
-  const tieneFavorito = columnas.some((c) => c.name === 'favorito');
-  if (!tieneFavorito) {
+  await asegurarColumna(db, 'cuento', 'favorito', 'favorito INTEGER NOT NULL DEFAULT 0');
+  await asegurarColumna(db, 'cuento', 'audio', 'audio TEXT');
+  await asegurarColumna(db, 'cuento', 'lugar_id', 'lugar_id INTEGER');
+
+  for (const nombre of ETIQUETAS) {
     await db.runAsync(
-      'ALTER TABLE cuento ADD COLUMN favorito INTEGER NOT NULL DEFAULT 0'
+      'INSERT OR IGNORE INTO etiqueta (nombre) VALUES (?)',
+      [nombre]
+    );
+  }
+
+  const lugares = await db.getFirstAsync('SELECT COUNT(*) AS total FROM lugar');
+  if (lugares?.total === 0) {
+    await db.runAsync(
+      'INSERT INTO lugar (comunidad, rio, quebrada) VALUES (?, ?, ?)',
+      ['Belén', 'Amazonas', 'Quebrada de la Lima']
+    );
+    await db.runAsync(
+      'INSERT INTO lugar (comunidad, rio, quebrada) VALUES (?, ?, ?)',
+      ['Padre Cocha', 'Nanay', '']
     );
   }
 
@@ -55,18 +103,22 @@ async function iniciarBD(db) {
 }
 
 export default function Layout() {
+  const esquema = useColorScheme();
+  const headerBg = esquema === 'dark' ? '#1c2922' : '#1b4332';
+
   return (
     <Suspense
       fallback={
-        <View style={{ flex: 1, justifyContent: 'center' }}>
-          <ActivityIndicator size="large" />
+        <View style={{ flex: 1, justifyContent: 'center', backgroundColor: headerBg }}>
+          <ActivityIndicator size="large" color="#fff" />
         </View>
       }
     >
+      <StatusBar style="light" />
       <SQLiteProvider databaseName="cuentero.db" onInit={iniciarBD} useSuspense>
         <Stack
           screenOptions={{
-            headerStyle: { backgroundColor: '#1b4332' },
+            headerStyle: { backgroundColor: headerBg },
             headerTintColor: '#fff',
           }}
         />

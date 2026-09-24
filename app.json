@@ -6,11 +6,15 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "cuentero",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Cuentero necesita el micrófono para grabar la versión oral del cuento."
+      }
     },
     "android": {
+      "permissions": ["RECORD_AUDIO"],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -23,7 +27,13 @@
     },
     "plugins": [
       "expo-router",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Cuentero necesita el micrófono para grabar la versión oral del cuento."
+        }
+      ]
     ]
   }
 }

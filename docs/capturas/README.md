@@ -1,8 +1,11 @@
-# Capturas — Cuentero
+# Capturas pendientes
 
-Aquí van las capturas de la app en un celular real:
+Toma estas fotos en tu celular con Expo Go y súbelas aquí:
 
-- `lista.png`
-- `editor.png`
-- `ajustes.png`
-- `favorito.png`
+1. `lista.png` — lista con contador y buscador
+2. `editor.png` — editor con palabras / etiquetas
+3. `ajustes.png` — exportar / importar
+4. `favorito.png` — estrella marcada
+5. `lugares.png` — pantalla de lugares (opcional)
+
+Luego enlázalas en el README.
