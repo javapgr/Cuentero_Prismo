@@ -29,7 +29,7 @@
       "expo-router",
       "expo-sqlite",
       [
-        "expo-av",
+        "expo-audio",
         {
           "microphonePermission": "Cuentero necesita el micrófono para grabar la versión oral del cuento."
         }

@@ -17,7 +17,14 @@ import {
   useNavigation,
 } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { Audio } from 'expo-av';
+import {
+  useAudioRecorder,
+  useAudioRecorderState,
+  useAudioPlayer,
+  AudioModule,
+  RecordingPresets,
+  setAudioModeAsync,
+} from 'expo-audio';
 import { useTema } from '../../src/theme';
 
 function contarPalabras(texto) {
@@ -43,11 +50,14 @@ export default function Editor() {
   const [lugares, setLugares] = useState([]);
   const [lugarId, setLugarId] = useState(null);
   const [audioUri, setAudioUri] = useState(null);
-  const [grabando, setGrabando] = useState(false);
   const [cuentoId, setCuentoId] = useState(esNuevo ? null : Number(id));
   const permitiendoSalir = useRef(false);
-  const recordingRef = useRef(null);
-  const soundRef = useRef(null);
+  const audioRecorder = useAudioRecorder({
+    ...RecordingPresets.HIGH_QUALITY,
+    directory: 'document',
+  });
+  const recorderState = useAudioRecorderState(audioRecorder);
+  const player = useAudioPlayer(audioUri ? { uri: audioUri } : null);
 
   const hayCambios =
     listo && (titulo !== tituloOriginal || cuerpo !== cuerpoOriginal);
@@ -203,58 +213,49 @@ export default function Editor() {
     );
   }
 
+  useEffect(() => {
+    (async () => {
+      try {
+        await AudioModule.requestRecordingPermissionsAsync();
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          allowsRecording: true,
+        });
+      } catch {
+        // Expo Go / emulador sin micrófono
+      }
+    })();
+  }, []);
+
   async function toggleGrabacion() {
     try {
-      if (grabando && recordingRef.current) {
-        await recordingRef.current.stopAndUnloadAsync();
-        const uri = recordingRef.current.getURI();
-        recordingRef.current = null;
-        setGrabando(false);
-        setAudioUri(uri);
+      if (recorderState.isRecording) {
+        await audioRecorder.stop();
+        if (audioRecorder.uri) setAudioUri(audioRecorder.uri);
         return;
       }
-      const permiso = await Audio.requestPermissionsAsync();
+      const permiso = await AudioModule.requestRecordingPermissionsAsync();
       if (!permiso.granted) {
         Alert.alert('Permiso', 'Necesito acceso al micrófono para grabar.');
         return;
       }
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-      const recording = new Audio.Recording();
-      await recording.prepareToRecordAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      await recording.startAsync();
-      recordingRef.current = recording;
-      setGrabando(true);
+      await audioRecorder.prepareToRecordAsync();
+      audioRecorder.record();
     } catch (e) {
       Alert.alert('Audio', e.message || 'No se pudo grabar.');
-      setGrabando(false);
     }
   }
 
-  async function reproducir() {
+  function reproducir() {
     if (!audioUri) return;
     try {
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-      }
-      const { sound } = await Audio.Sound.createAsync({ uri: audioUri });
-      soundRef.current = sound;
-      await sound.playAsync();
+      player.replace({ uri: audioUri });
+      player.seekTo(0);
+      player.play();
     } catch (e) {
       Alert.alert('Audio', e.message || 'No se pudo reproducir.');
     }
   }
-
-  useEffect(() => {
-    return () => {
-      if (soundRef.current) soundRef.current.unloadAsync();
-      if (recordingRef.current) recordingRef.current.stopAndUnloadAsync();
-    };
-  }, []);
 
   const palabras = contarPalabras(cuerpo);
 
@@ -377,7 +378,7 @@ export default function Editor() {
             onPress={toggleGrabacion}
           >
             <Text style={{ color: c.primarioTexto, fontWeight: '600' }}>
-              {grabando ? 'Detener' : 'Grabar'}
+              {recorderState.isRecording ? 'Detener' : 'Grabar'}
             </Text>
           </Pressable>
           {!!audioUri && (

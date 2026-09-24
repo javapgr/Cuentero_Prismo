@@ -36,7 +36,7 @@ Nunca concateno el texto del usuario en el SQL. Uso parámetros: `WHERE id = ?` 
 | T8 | Tablas `etiqueta` y `cuento_etiqueta` | `_layout.jsx` + editor + lista |
 | T9 | `useColorScheme()` cambia colores claro/oscuro | `src/theme` + pantallas |
 | T10 | Tras 3 s sin escribir, guarda solo (`setTimeout`) | `app/cuento/[id].jsx` |
-| T11 | Audio con `expo-av`, ruta en columna `audio` | editor |
+| T11 | Audio con `expo-audio`, ruta en columna `audio` | editor |
 | T12 | Tabla `lugar` y pantalla `/lugares` | `_layout.jsx` + `lugares.jsx` |
 | T13 | Importar Markdown (partir por `---`) | `ajustes.jsx` |
 | T14 | APK con `eas build -p android --profile preview` | `eas.json` |
