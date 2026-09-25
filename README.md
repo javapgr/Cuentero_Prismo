@@ -71,8 +71,25 @@ npm run build:apk
 
 ## Capturas
 
-Pon pantallazos del celular en `docs/capturas/` (lista, editor, ajustes, favorito, lugares).
+Pantallazos del celular con Expo Go.
 
-## Sustentación
+### Lista
 
-Lee [`SUSTENTACION.md`](SUSTENTACION.md) antes de explicar mañana.
+![Lista](docs/capturas/lista.jpeg)
+
+### Editor
+
+![Editor](docs/capturas/editor.jpeg)
+
+### Ajustes
+
+![Ajustes](docs/capturas/ajustes.jpeg)
+
+### Favorito
+
+![Favorito](docs/capturas/favorito.jpeg)
+
+### Lugares
+
+![Lugares](docs/capturas/lugares.jpeg)
+
